@@ -3,6 +3,20 @@ project(coral_iron_turtle)
 
 set(CMAKE_CXX_STANDARD 20)
 
+include_directories(/home/mendel/pose_detection/tensorflow_special_commit/tensorflow/tensorflow/lite/tools/make/downloads/flatbuffers/include)
+include_directories(/home/mendel/pose_detection/tensorflow_special_commit/tensorflow/tensorflow/lite/)
+include_directories(/home/mendel/pose_detection/tensorflow_special_commit/tensorflow)
+
+function(dep_edgetpu_tsl EXECUTABLE)
+    target_link_libraries(${EXECUTABLE} /home/mendel/pose_detection/libedgetpu-local/libedgetpu/direct/aarch64/libedgetpu.so.1.0)
+    target_link_libraries(${EXECUTABLE} /home/mendel/pose_detection/tensorflow_special_commit/tensorflow/tensorflow/lite/tools/make/gen/aarch64_armv8-a/lib/libtensorflow-lite.a)
+
+    target_link_libraries(${EXECUTABLE} pthread)
+    target_link_libraries(${EXECUTABLE} m)
+    target_link_libraries(${EXECUTABLE} dl)
+    target_link_libraries(${EXECUTABLE} rt)
+endfunction()
+
 add_executable(coral_iron_turtle
 ###      source file with the project begin function
         main.cpp
@@ -52,8 +66,23 @@ add_executable(coral_iron_turtle
         process_camera/rear_sight_processor/rear_sight_processor_keep_frame_proportionality.cpp
         process_camera/rear_sight_webrtc_manipulation.cpp
         process_camera/rear_sight_webrtc_manipulation.h
-        )
 
+###      this is the source code for the pose point detection with Google Coral TPU accelerator
+        pose_processing/posenet/posenet_decoder.h
+        pose_processing/posenet/posenet_decoder.cc
+        pose_processing/posenet/posenet_decoder_op.h
+        pose_processing/posenet/posenet_decoder_op.cc
+
+        pose_processing/pose_angle_detection_src/pose_angle_engine.h
+        pose_processing/pose_angle_detection_src/pose_angle_engine.cpp
+
+        pose_processing/pose_detector_src/pose_detector_wrapper.h
+        pose_processing/pose_detector_src/pose_detector_wrapper.cpp
+)
+
+
+dep_edgetpu_tsl(coral_iron_turtle)
+target_compile_definitions(coral_iron_turtle PRIVATE MY_DEBUG_DEF)
 
 target_compile_definitions(coral_iron_turtle PRIVATE UBUNTU_PC)
 #target_compile_definitions(coral_iron_turtle PRIVATE RASPBERRY_PI)
