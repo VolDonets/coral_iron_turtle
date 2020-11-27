@@ -31,34 +31,8 @@ static GstPadProbeReturn cb_have_data(GstPad *pad, GstPadProbeInfo *info, gpoint
 
         cv::Mat main_image = cv::Mat(frame_size, CV_8UC4, (char *) (map.data), cv::Mat::AUTO_STEP);
 
-//        if (count_frames == CHECK_PER_FRAMES) {
-//            cv::Mat checking_mat = main_image.clone();
-//            form_detection_processor->add_frame(checking_mat);
-//            count_frames = 0;
-//        }
-//        count_frames++;
-//        std::vector<cv::Rect> *faces_coord = form_detection_processor->getLastDetectedFaces();
-//        if (faces_coord != nullptr) {
-//            // this line draw all detected ROIs, WITHOUT interpolation
-//            for(int i = 0; i < faces_coord->size(); i++)
-//                cv::rectangle(main_image, faces_coord->operator[](i), cv::Scalar(0, 255, 0), 2, 0, 0);
-
-        // this lines draw only one ROI with detected object, but with interpolation.
-        /* std::cout << "Size::: " << faces_coord->size() << "\n";
-        if (faces_coord->size() != 0) {
-            if (old_rectangle.width == 0)
-                old_rectangle = faces_coord->operator[](0);
-            old_rectangle = cv::Rect(faces_coord->operator[](0).x * INTERPOLATION_COEFFICIENT + old_rectangle.x * (1 - INTERPOLATION_COEFFICIENT),
-                                      faces_coord->operator[](0).y * INTERPOLATION_COEFFICIENT + old_rectangle.y * (1 - INTERPOLATION_COEFFICIENT),
-                                      faces_coord->operator[](0).width * INTERPOLATION_COEFFICIENT + old_rectangle.width * (1 - INTERPOLATION_COEFFICIENT),
-                                      faces_coord->operator[](0).height * INTERPOLATION_COEFFICIENT + old_rectangle.height * (1 - INTERPOLATION_COEFFICIENT));
-
-            cv::rectangle(main_image, old_rectangle, cv::Scalar(0, 255, 0), 2, 0, 0);
-        } else
-            old_rectangle.width = 0;
-            */
-//        }
-
+        s_poseDetectorWrapper->add_frame(main_image.clone());
+        s_poseDetectorWrapper->draw_last_pose_on_image(main_image);
 
         cv::Mat copy_main_image = main_image.clone();
 
@@ -158,8 +132,8 @@ void create_and_run_pipeline() {
 }
 
 int start_gst_loop() {
-    //s_poseDetectorWrapper = std::make_unique<PoseDetectorWrapper>();
-    //s_poseDetectorWrapper->start_pose_detection();
+    s_poseDetectorWrapper = std::make_unique<PoseDetectorWrapper>();
+    s_poseDetectorWrapper->start_pose_detection();
 
     setlocale(LC_ALL, "");
     gst_init(nullptr, nullptr);
@@ -168,10 +142,10 @@ int start_gst_loop() {
     mainloop = g_main_loop_new(NULL, FALSE);
     g_assert (mainloop != NULL);
 
-#ifdef G_OS_UNIX
+/*#ifdef G_OS_UNIX
     g_unix_signal_add(SIGINT, exit_sighandler, mainloop);
     g_unix_signal_add(SIGTERM, exit_sighandler, mainloop);
-#endif
+#endif*/
 
     create_and_run_pipeline();
 

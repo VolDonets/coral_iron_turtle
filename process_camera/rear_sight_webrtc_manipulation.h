@@ -7,6 +7,7 @@
 
 #include "rear_sight_processor/image_processing.h"
 #include "rear_sight_processor/rear_sight_processor.h"
+#include "../pose_processing/pose_detector_src/pose_detector_wrapper.h"
 
 #include <locale.h>
 #include <glib.h>
@@ -77,5 +78,9 @@ static cv::Rect old_rectangle(0, 0, 0, 0);
 
 /// this is an object with a speed value (here is not an actual speed, this is values for creating speed commands)
 static std::string current_speed = "Speed LW=0, RW=0";
+
+/** this is an object with PoseDetectorWrapper with detect poses on each frame from a video stream and helps to draw it
+ * the current frame. */
+static std::unique_ptr<PoseDetectorWrapper> s_poseDetectorWrapper;
 
 #endif //IRON_TURTLE_REAR_SIGHT_WEBRTC_MANIPULATION_H
