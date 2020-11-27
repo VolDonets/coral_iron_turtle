@@ -34,11 +34,9 @@ void MyHandler::onConnect(WebSocket* connection) {
         if (_isFirstWebRTC_Connection) {
             _rearSightThread = std::thread([this, connection]() {
                 init_rear_sight_processor();
-                webrtc_gst_loop(connection);
+                start_gst_loop();
             });
             _isFirstWebRTC_Connection = false;
-        } else {
-            webrtc_pipeline_restart(connection);
         }
         _delegate->doEvent(eventClientConnected);
     } else {
@@ -66,25 +64,14 @@ void MyHandler::onData(WebSocket* connection, const char* data) {
         g_object_unref(jsonParser);
         return;
     }
-
-    webrtc_session_handle(data);
 }
 
 void MyHandler::onDisconnect(WebSocket* connection) {
-#ifdef UBUNTU_PC
-    if (_connections.contains(connection)) {
-        _delegate->doEvent(eventClientDisconnected);
-    }
-#endif //UBUNTU_PC
-#ifdef RASPBERRY_PI
     for (WebSocket* c: _connections) {
         if (c == connection) {
             _delegate->doEvent(eventClientDisconnected);
         }
     }
-#endif //RASPBERRY_PI
-
-    webrtc_pipeline_deactivate(connection);
     _connections.erase(connection);
 }
 
