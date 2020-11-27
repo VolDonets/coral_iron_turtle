@@ -55,6 +55,9 @@ private:
     /** @brief This is an object of PoseAngleEngine class, which used for calculating a human body direction angle. */
     std::shared_ptr<PoseAngleEngine> _poseAngleEngine;
 
+    /** @bried This is a coordinate of the most interested point */
+    std::pair<int, int> _interestAreaCenterCoordinate;
+
     /** @brief This is a queue of frames which are waiting for processing
      *         (means finding a key points of the human pose)*/
     std::list<cv::Mat> _queueFrames;

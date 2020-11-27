@@ -12,6 +12,9 @@ PoseDetectorWrapper::PoseDetectorWrapper() {
     // load model from file and prepare space for pose detection processing
     init_pose_detector(PATH_TO_POSENET_MODEL);
     _poseAngleEngine = std::make_shared<PoseAngleEngine>(true, 640, 480);
+
+    _interestAreaCenterCoordinate.first = 640 / 2;
+    _interestAreaCenterCoordinate.second = 480 / 2;
 }
 
 PoseDetectorWrapper::PoseDetectorWrapper(const std::string &pathToPoseNetModel) {
@@ -21,6 +24,10 @@ PoseDetectorWrapper::PoseDetectorWrapper(const std::string &pathToPoseNetModel) 
     _mutexProc.lock();
     // load model from file and prepare space for pose detection processing
     init_pose_detector(pathToPoseNetModel);
+
+    _poseAngleEngine = std::make_shared<PoseAngleEngine>(true, 640, 480);
+    _interestAreaCenterCoordinate.first = 640 / 2;
+    _interestAreaCenterCoordinate.second = 480 / 2;
 }
 
 PoseDetectorWrapper::~PoseDetectorWrapper() {
