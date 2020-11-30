@@ -41,6 +41,8 @@ private:
     /** @brief this variable contains a last detected pose angle - it's used for returning if pose points are not enough
      *         for correct angle detection*/
     float _lastDetectedAngle;
+    /** @brief this variable contains a pair of values, the first one is x_offset and the second one is y_offset*/
+    std::pair<float, float> _lastXYoffset;
 
     /** @brief this variable contains a count of the current initialization steps - it's used as a break flag for
      *         stopping an init process*/
@@ -89,7 +91,7 @@ public:
      *  @param xCoords - const ref to vector of x coordinates of each pose points, if point isn't detected this one equals '-1'
      *  @param yCoords - const ref to vector of y coordinates of each pose points
      *  @return status of pose params detection */
-    bool get_xy_offset_no_dist(std::pair<double, double> &xy_offset, const std::vector<int> &xCoord,
+    bool get_xy_offset_no_dist(std::pair<float, float> &xy_offset, const std::vector<int> &xCoord,
                                const std::vector<int> &yCoords);
 
     /** @return - current distance between eyes*/

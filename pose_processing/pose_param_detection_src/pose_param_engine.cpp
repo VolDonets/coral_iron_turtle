@@ -16,6 +16,8 @@ PoseParamEngine::PoseParamEngine(bool isModelHasFaceBasePoints, int widthImage, 
 
     _leftBodyDistanceOnImage = 0.0;
     _rightBodyDistanceOnImage = 0.0;
+    _lastXYoffset.first = -1;
+    _lastXYoffset.second = -1;
 }
 
 PoseParamEngine::~PoseParamEngine() {
@@ -195,9 +197,48 @@ void PoseParamEngine::init_angle_detector_no_dist(const std::vector<int> &xCoord
     }
 }
 
-bool PoseParamEngine::get_xy_offset_no_dist(std::pair<double, double> &xy_offset, const std::vector<int> &xCoord,
-                           const std::vector<int> &yCoords) {
-    return false;
+bool PoseParamEngine::get_xy_offset_no_dist(std::pair<float, float> &xy_offset, const std::vector<int> &xCoord,
+                                            const std::vector<int> &yCoords) {
+    if (_countInitSteps != MAX_INIT_STEPS) {
+        init_angle_detector_no_dist(xCoord, yCoords);
+        return false;
+    }
+    float bodyWidth = -1;
+    if (xCoord[5] != -1 && xCoord[6] != -1 && xCoord[11] != -1 && xCoord[12] != -1) {
+        bodyWidth = (sqrt(pow((xCoord[5] - xCoord[11]), 2) + pow((yCoords[5] - yCoords[11]), 2))
+                     + sqrt(pow((xCoord[6] - xCoord[12]), 2) + pow((yCoords[6] - yCoords[12]), 2))) / 2;
+    } else if (xCoord[5] != -1 && xCoord[11] != -1) {
+        bodyWidth = sqrt(pow((xCoord[5] - xCoord[11]), 2) + pow((yCoords[5] - yCoords[11]), 2));
+    } else if (xCoord[6] != -1 && xCoord[12] != -1) {
+        bodyWidth = sqrt(pow((xCoord[6] - xCoord[12]), 2) + pow((yCoords[6] - yCoords[12]), 2));
+    }
+
+    if (bodyWidth < 0) {
+        return false;
+    }
+
+    std::pair<int, int> bodyCenterCoordinate;
+    int includedPointsCounter = 0;
+    for (int inx = 0; inx < xCoord.size(); inx++) {
+        if (xCoord[inx] != -1) {
+            bodyCenterCoordinate.first += xCoord[inx];
+            bodyCenterCoordinate.second += yCoords[inx];
+            includedPointsCounter++;
+        }
+    }
+    bodyCenterCoordinate.first /= includedPointsCounter;
+    bodyCenterCoordinate.second /= includedPointsCounter;
+
+    // I took a basic distance to human body as 1m
+    // 2.907 - is scale parameter, which I have calculated for current camera, but it can be changed to other
+    //TODO - !?possibly I should add kinda camera interface for making this interface universal
+    _lastXYoffset.second = 2.907 * (1 - (bodyWidth / ((_rightBodyDistanceOnImage + _leftBodyDistanceOnImage) / 2)));
+    // I have measured a camera angle as 150 degrees, so now I can use a proportion
+    _lastXYoffset.first = (2.62 * (bodyCenterCoordinate.first - (_widthImage / 2))) / _widthImage;
+
+    xy_offset.first = _lastXYoffset.first;
+    xy_offset.second = _lastXYoffset.second;
+    return true;
 }
 
 float PoseParamEngine::get_eyes_distance() {

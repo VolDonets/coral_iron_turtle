@@ -52,6 +52,8 @@ struct DetectedPose {
  *         It from input image gets a key points. This key points can be used as you wish*/
 class PoseDetectorWrapper {
 private:
+    /** @brief This variable contains count wait before init steps */
+    int _initWaitSteps = 0;
     /** @brief This is an object of PoseAngleEngine class, which used for calculating a human body direction angle. */
     std::shared_ptr<PoseParamEngine> _poseParamEngine;
 
