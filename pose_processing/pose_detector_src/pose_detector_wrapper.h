@@ -20,7 +20,7 @@
 #include "kernels/register.h"
 
 #include "../posenet/posenet_decoder_op.h"
-#include "../pose_angle_detection_src/pose_angle_engine.h"
+#include "../pose_param_detection_src/pose_param_engine.h"
 
 /** @brief This constant contains a code of successful operation. */
 const int CODE_STATUS_OK = 0;
@@ -53,7 +53,7 @@ struct DetectedPose {
 class PoseDetectorWrapper {
 private:
     /** @brief This is an object of PoseAngleEngine class, which used for calculating a human body direction angle. */
-    std::shared_ptr<PoseAngleEngine> _poseAngleEngine;
+    std::shared_ptr<PoseParamEngine> _poseParamEngine;
 
     /** @bried This is a coordinate of the most interested point */
     std::pair<int, int> _interestAreaCenterCoordinate;

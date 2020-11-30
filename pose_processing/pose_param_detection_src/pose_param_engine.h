@@ -11,7 +11,7 @@
 
 const int MAX_INIT_STEPS = 30;
 
-class PoseAngleEngine {
+class PoseParamEngine {
 private:
     bool _isModelHasFaceBasePoints;
     int _widthImage;
@@ -28,8 +28,8 @@ private:
     void init_angle_detector(const std::vector<int> &xCoords, const std::vector<int> &yCoords);
     void init_angle_detector_no_dist(const std::vector<int> &xCoords, const std::vector<int> &yCoords);
 public:
-    PoseAngleEngine(bool isModelHasFaceBasePoints, int widthImage, int heightImage);
-    ~PoseAngleEngine();
+    PoseParamEngine(bool isModelHasFaceBasePoints, int widthImage, int heightImage);
+    ~PoseParamEngine();
 
     bool get_angle(float &angle, const std::vector<int> &xCoords, const std::vector<int> &yCoords);
     bool get_angle_no_dist(float &angle, const std::vector<int> &xCoords, const std::vector<int> &yCoords);

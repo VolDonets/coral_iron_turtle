@@ -231,17 +231,17 @@ void PoseDetectorWrapper::draw_last_pose_on_image(cv::Mat &frame) {
             }
             float angle = 0.0;
 //            _poseAngleEngine->get_angle(angle, k_x, k_y);
-            _poseAngleEngine->get_angle_no_dist(angle, k_x, k_y);
+            _poseParamEngine->get_angle_no_dist(angle, k_x, k_y);
             angle = (180 * angle) / 3.14;
 
             std::string strLine = "Pose angle: " + std::to_string(angle);
             cv::putText(frame, strLine, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
                         cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
 
-            strLine = "Eyes distance: " + std::to_string(_poseAngleEngine->get_eyes_distance());
+            strLine = "Eyes distance: " + std::to_string(_poseParamEngine->get_eyes_distance());
             cv::putText(frame, strLine, cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
                         cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
-            strLine = "Shoulder distance: " + std::to_string(_poseAngleEngine->get_shoulder_distance());
+            strLine = "Shoulder distance: " + std::to_string(_poseParamEngine->get_shoulder_distance());
             cv::putText(frame, strLine, cv::Point(10, 90), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
                         cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
             break;

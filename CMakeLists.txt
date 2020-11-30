@@ -73,8 +73,8 @@ add_executable(coral_iron_turtle
         pose_processing/posenet/posenet_decoder_op.h
         pose_processing/posenet/posenet_decoder_op.cc
 
-        pose_processing/pose_angle_detection_src/pose_angle_engine.h
-        pose_processing/pose_angle_detection_src/pose_angle_engine.cpp
+        pose_processing/pose_param_detection_src/pose_param_engine.h
+        pose_processing/pose_param_detection_src/pose_param_engine.cpp
 
         pose_processing/pose_detector_src/pose_detector_wrapper.h
         pose_processing/pose_detector_src/pose_detector_wrapper.cpp

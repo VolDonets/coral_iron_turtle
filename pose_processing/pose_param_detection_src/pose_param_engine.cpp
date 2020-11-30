@@ -2,9 +2,9 @@
 // Created by biba_bo on 2020-11-17.
 //
 
-#include "pose_angle_engine.h"
+#include "pose_param_engine.h"
 
-PoseAngleEngine::PoseAngleEngine(bool isModelHasFaceBasePoints, int widthImage, int heightImage) {
+PoseParamEngine::PoseParamEngine(bool isModelHasFaceBasePoints, int widthImage, int heightImage) {
     _isModelHasFaceBasePoints = isModelHasFaceBasePoints;
     _widthImage = widthImage;
     _heightImage = heightImage;
@@ -18,12 +18,12 @@ PoseAngleEngine::PoseAngleEngine(bool isModelHasFaceBasePoints, int widthImage, 
     _rightBodyDistanceOnImage = 0.0;
 }
 
-PoseAngleEngine::~PoseAngleEngine() {
+PoseParamEngine::~PoseParamEngine() {
     // nothing to do here
 }
 
 bool
-PoseAngleEngine::get_angle_no_dist(float &angle, const std::vector<int> &xCoords, const std::vector<int> &yCoords) {
+PoseParamEngine::get_angle_no_dist(float &angle, const std::vector<int> &xCoords, const std::vector<int> &yCoords) {
     if (_countInitSteps != MAX_INIT_STEPS) {
         init_angle_detector_no_dist(xCoords, yCoords);
         return false;
@@ -89,7 +89,7 @@ PoseAngleEngine::get_angle_no_dist(float &angle, const std::vector<int> &xCoords
     return true;
 }
 
-bool PoseAngleEngine::get_angle(float &angle, const std::vector<int> &xCoords, const std::vector<int> &yCoords) {
+bool PoseParamEngine::get_angle(float &angle, const std::vector<int> &xCoords, const std::vector<int> &yCoords) {
     if (_countInitSteps != MAX_INIT_STEPS) {
         init_angle_detector(xCoords, yCoords);
         return false;
@@ -147,7 +147,7 @@ bool PoseAngleEngine::get_angle(float &angle, const std::vector<int> &xCoords, c
     return true;
 }
 
-void PoseAngleEngine::init_angle_detector(const std::vector<int> &xCoords, const std::vector<int> &yCoords) {
+void PoseParamEngine::init_angle_detector(const std::vector<int> &xCoords, const std::vector<int> &yCoords) {
     if ((xCoords[1] != -1 && xCoords[2] != -1)
         && (xCoords[5] != -1 && xCoords[6] != -1)) {
         _eyesDistanceOnImage += sqrt(pow((xCoords[1] - xCoords[2]), 2) +
@@ -162,7 +162,7 @@ void PoseAngleEngine::init_angle_detector(const std::vector<int> &xCoords, const
     }
 }
 
-void PoseAngleEngine::init_angle_detector_no_dist(const std::vector<int> &xCoords, const std::vector<int> &yCoords) {
+void PoseParamEngine::init_angle_detector_no_dist(const std::vector<int> &xCoords, const std::vector<int> &yCoords) {
     if (_countInitSteps == 0) {
         _shoulderDistanceOnImage = 0.0;
         _rightBodyDistanceOnImage = 0.0;
@@ -188,11 +188,11 @@ void PoseAngleEngine::init_angle_detector_no_dist(const std::vector<int> &xCoord
     }
 }
 
-float PoseAngleEngine::get_eyes_distance() {
+float PoseParamEngine::get_eyes_distance() {
     return _eyesDistanceOnImage;
 }
 
-float PoseAngleEngine::get_shoulder_distance() {
+float PoseParamEngine::get_shoulder_distance() {
     return _shoulderDistanceOnImage;
 }
 
