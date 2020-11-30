@@ -196,6 +196,7 @@ void PoseDetectorWrapper::process_pose_detection() {
             std::vector<float> rawOutputData = get_raw_output_data_from_model(inputData);
             std::vector<DetectedPose> detectedPoses = get_pose_estimate_from_output_raw_data(rawOutputData,
                                                                                              POSE_THRESHOLD);
+            find_the_most_suitable_pose(detectedPoses);
             if (_queueDetectedPoses.size() > MAX_COUNT_POSE_VECTORS_IN_QUEUE)
                 _queueDetectedPoses.pop_front();
             _queueDetectedPoses.push_back(detectedPoses);
@@ -207,6 +208,8 @@ void PoseDetectorWrapper::process_pose_detection() {
 }
 
 void PoseDetectorWrapper::draw_last_pose_on_image(cv::Mat &frame) {
+    cv::circle(frame, cv::Point(_interestAreaCenterCoordinate.first, _interestAreaCenterCoordinate.second), 30,
+               cv::Scalar(0, 255, 0), 2, cv::LINE_8, 0);
     if (_initWaitSteps < 75) {
         std::string strLine = "";
         if (_initWaitSteps < 15)
@@ -263,7 +266,7 @@ void PoseDetectorWrapper::draw_last_pose_on_image(cv::Mat &frame) {
             cv::putText(frame, strLine, cv::Point(10, 90), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
                         cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
             std::pair<float, float> poseParam;
-            if (_poseParamEngine->get_xy_offset_no_dist(poseParam, k_x, k_y)){
+            if (_poseParamEngine->get_xy_offset_no_dist(poseParam, k_x, k_y)) {
                 strLine = "Angle offset: " + std::to_string((180 * poseParam.first) / 3.14) + "°";
                 cv::putText(frame, strLine, cv::Point(10, 110), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
                             cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
@@ -295,4 +298,45 @@ PoseDetectorWrapper::build_edge_tpu_interpreter(const tflite::FlatBufferModel &m
         _statusModelInterpreterActivation = CODE_FAILED_BUILD_MODEL_FROM_FILE;
     }
     return interpreter;
+}
+
+void PoseDetectorWrapper::find_the_most_suitable_pose(std::vector<DetectedPose> &detectedPoses) {
+    int inxTheMostInterested = 0;
+    float distanceBetweenCenters = 7777777; // maximum value as possible
+    float superMiddleX = _interestAreaCenterCoordinate.first,
+            superMiddleY = _interestAreaCenterCoordinate.second;
+
+    for (int inx = 0; inx < detectedPoses.size(); inx++) {
+        float middleX = 0.0, middleY = 0.0;
+        int countOKPoints = 0;
+        for (int i = 0; i < 17; i++) {
+            if (detectedPoses[inx].keypointScores[i] > POSE_THRESHOLD) {
+                float x_coordinate =
+                        detectedPoses[inx].keypointCoordinates[(2 * i) + 1] * (640 / _widthInputLayerPoseNetModel);
+                float y_coordinate =
+                        detectedPoses[inx].keypointCoordinates[2 * i] * (480 / _heightInputLayerPoseNetModel);
+                middleX += static_cast<int>(x_coordinate);
+                middleY += static_cast<int>(y_coordinate);
+                countOKPoints++;
+            }
+        }
+        middleX /= countOKPoints;
+        middleY /= countOKPoints;
+        float currentDistanceBetweenCenter = sqrt(pow(_interestAreaCenterCoordinate.first - middleX, 2) +
+                                                  pow(_interestAreaCenterCoordinate.second - middleY, 2));
+        if (distanceBetweenCenters > currentDistanceBetweenCenter) {
+            distanceBetweenCenters = currentDistanceBetweenCenter;
+            inxTheMostInterested = inx;
+            superMiddleX = middleX;
+            superMiddleY = middleY;
+        }
+    }
+
+    if (inxTheMostInterested != 0) {
+        DetectedPose &copy = detectedPoses[inxTheMostInterested];
+        detectedPoses[inxTheMostInterested] = detectedPoses[0];
+        detectedPoses[0] = copy;
+        _interestAreaCenterCoordinate.first = superMiddleX;
+        _interestAreaCenterCoordinate.second = superMiddleY;
+    }
 }

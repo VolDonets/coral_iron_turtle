@@ -137,6 +137,8 @@ private:
      *         from the frames queue.*/
     void process_pose_detection();
 
+    /** @brief This find from all poses the most suitable pose according with current interest center */
+    void find_the_most_suitable_pose(std::vector<DetectedPose> &detectedPoses);
 
 public:
     /** @brief this a default constructor, here inits all needed fields*/
