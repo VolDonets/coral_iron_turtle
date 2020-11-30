@@ -55,9 +55,15 @@ PoseParamEngine::get_angle_no_dist(float &angle, const std::vector<int> &xCoords
         }
 
         if (currentMaxShoulderDistance > -1) {
-            _shoulderDistanceOnImage = sqrt(pow((xCoords[5] - xCoords[6]), 2) + pow((yCoords[5] - yCoords[6]), 2));
-            if (_shoulderDistanceOnImage >= currentMaxShoulderDistance) {
-                _lastDetectedAngle = 0.0;
+            float currentShoulderDistanceOnImage = sqrt(
+                    pow((xCoords[5] - xCoords[6]), 2) + pow((yCoords[5] - yCoords[6]), 2));
+            if (currentShoulderDistanceOnImage >= currentMaxShoulderDistance) {
+                // check is image has face elements line eyes or nose
+                // it helps to detect a human body direction on camera
+                if (xCoords[0] != -1)
+                    _lastDetectedAngle = 0.0;
+                else
+                    _lastDetectedAngle = 3.14;
             } else {
                 float middleFaceX = 0.0;
                 float middleShoulderX = 0.0;
@@ -75,12 +81,13 @@ PoseParamEngine::get_angle_no_dist(float &angle, const std::vector<int> &xCoords
                 // it helps to detect a human body direction on camera
                 if (xCoords[0] != -1) {
                     _lastDetectedAngle = (middleShoulderX > middleFaceX)
-                                         ? (acos(_shoulderDistanceOnImage / currentMaxShoulderDistance))
-                                         : -(acos(_shoulderDistanceOnImage / currentMaxShoulderDistance));
+                                         ? (acos(currentShoulderDistanceOnImage / currentMaxShoulderDistance))
+                                         : -(acos(currentShoulderDistanceOnImage / currentMaxShoulderDistance));
                 } else {
                     _lastDetectedAngle = (middleShoulderX > middleFaceX)
-                                         ? (3.14 - (acos(_shoulderDistanceOnImage / currentMaxShoulderDistance)))
-                                         : -(3.13 - (acos(_shoulderDistanceOnImage / currentMaxShoulderDistance)));
+                                         ? (3.14 - (acos(currentShoulderDistanceOnImage / currentMaxShoulderDistance)))
+                                         : -(3.13 -
+                                             (acos(currentShoulderDistanceOnImage / currentMaxShoulderDistance)));
                 }
             }
         }
@@ -186,6 +193,11 @@ void PoseParamEngine::init_angle_detector_no_dist(const std::vector<int> &xCoord
             _currentBodyRatio = _shoulderDistanceOnImage / ((_leftBodyDistanceOnImage + _rightBodyDistanceOnImage) / 2);
         }
     }
+}
+
+bool PoseParamEngine::get_xy_offset_no_dist(std::pair<double, double> &xy_offset, const std::vector<int> &xCoord,
+                           const std::vector<int> &yCoords) {
+    return false;
 }
 
 float PoseParamEngine::get_eyes_distance() {
