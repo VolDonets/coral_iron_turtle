@@ -19,10 +19,10 @@
  * CROPPED_WIDTH - width of cropping
  * CROPPED_HEIGHT - height of cropping
  * CROPPED_X, CROPPED_Y - a coordinates of cropping*/
-#define CROPPED_WIDTH_2           200
-#define CROPPED_HEIGHT_2          160
-#define CROPPED_X_BEGIN           220
-#define CROPPED_Y_BEGIN           120
+#define CROPPED_WIDTH_2           640//200
+#define CROPPED_HEIGHT_2          480//160
+#define CROPPED_X_BEGIN           0//220
+#define CROPPED_Y_BEGIN           0//120
 
 #define ZOOM_STEP                 20
 #define MOVE_STEP                 20
