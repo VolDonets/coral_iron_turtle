@@ -30,6 +30,16 @@
 #include <thread>      // An object of the created threads
 #include <mutex>       // For thread locking (possybly will be usefull)
 
+/// My own event code (this means a client wants to enable pursuit processing)
+constexpr int EVENT_ENABLE_PURSUIT = 14;
+/// My own event code (this means a client wants to disable pursuit processing)
+constexpr int EVENT_DISABLE_PURSUIT = 15;
+
+/// This command gets from a client, if the client wants to Enable Pursuit Processor
+#define COMMAND_ENABLE_PURSUIT      "EPP"
+/// This command gets form a client, if the client wants to Disable Pursuit Processor
+#define COMMAND_DISABLE_PURSUIT     "DPP"
+
 /// My own event code (this means a client is wanting to move the iron turtle in the FORWARD direction faster).
 constexpr int EVENT_MOVE_FORWARD = 1;
 /// My own event code (this means a client is wanting to move the iron turtle in the BACKWARD direction faster).
@@ -132,6 +142,11 @@ private:
     /** this variable answers on the question "Had it WebRTC connection/gst loop?"
       also by this variable we decide to create a new thread for gst loop or not*/
     bool _isFirstWebRTC_Connection;
+
+    /// smart pointer to my own event "enable pursuit processing"
+    std::shared_ptr<EventWS> eventEnablePursuitProcessing;
+    /// smart pointer to my own event "disable pursuit processing"
+    std::shared_ptr<EventWS> eventDisablePursuitProcessing;
 
     /// smart pointer to my own event "moving the iron turtle forward"
     std::shared_ptr<EventWS> eventMoveForward;

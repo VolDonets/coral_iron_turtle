@@ -18,6 +18,7 @@
 #include "web_server/lib_my_event_handler/handler_ws.h"
 #include "turtle_manager/smooth_turtle_manager.h"
 #include "process_camera/rear_sight_webrtc_manipulation.h"
+#include "pursuit_processor/pursuit_processor.h"
 
 /** This is the class WebServerWorker, which extends the abstract class HandlerWS (which are a part of my own handling system)
  * it used for handling interrupts from the WebServer, and works width hardware drivers*/
@@ -38,6 +39,9 @@ private:
     /** Method for processing a "hard" request from webserver in the another thread */
     void processServer();
 
+    /** This field contains status of pursuit processing*/
+    bool _isEnabledPursuitProcessing;
+
     /** The field with the web-server thread */
     std::thread server_thread;
     /** The field with the loggering system for web-server */
@@ -51,6 +55,9 @@ private:
     /** The field with TurtleManager. This one are manager of the iron turtle driver. It just gets commands from this class
      * and them process it if possible*/
     shared_ptr<SmoothTurtleManager> turtle_manager;
+    /** The field with PursuitProcessor. This one are manager of the iron turtle driver. It just gets commands from this class
+    * and them process it if possible, also it gets aims from the pose processor and trying to pursuit for the aim*/
+    shared_ptr<PursuitProcessor> pursuit_turtle_processor;
 };
 
 

@@ -8,10 +8,16 @@
 
 
 WebServerWorker::WebServerWorker() {
+    std::shared_ptr<SerialManager> serialManager = std::make_shared<SerialManager>();
     // creating an object of TurtleManager with connecting throw COM-port
-    turtle_manager = make_shared<SmoothTurtleManager>();
+    turtle_manager = make_shared<SmoothTurtleManager>(serialManager);
+    pursuit_turtle_processor = make_shared<PursuitProcessor>(serialManager);
+
     // starting the iron turtle moving processing thread
+    // by default the iron turtle moves by custom commands
     turtle_manager->restart_processing_thread();
+    _isEnabledPursuitProcessing = false;
+
     // starting web-server
     this->startServer();
     // this thread sleeps for 1 seconds for avoiding bugs and errors
@@ -50,22 +56,53 @@ void WebServerWorker::joinServerTread() {
 
 void WebServerWorker::handleEventWS(std::shared_ptr<EventWS> event) {
     // handling events by the event code
-    switch(event->getEventID()) {
+    switch (event->getEventID()) {
         case EVENT_MOVE_FORWARD:
-            turtle_manager->move_forward();
+            if (_isEnabledPursuitProcessing)
+                pursuit_turtle_processor->resume_moving();
+            else
+                turtle_manager->move_forward();
             break;
         case EVENT_MOVE_BACK:
-            turtle_manager->move_backward();
+            if (_isEnabledPursuitProcessing)
+                pursuit_turtle_processor->resume_moving();
+            else
+                turtle_manager->move_backward();
             break;
         case EVENT_MOVE_LEFTER:
-            turtle_manager->move_lefter();
+            if (_isEnabledPursuitProcessing)
+                pursuit_turtle_processor->resume_moving();
+            else
+                turtle_manager->move_lefter();
             break;
         case EVENT_MOVE_RIGHTER:
-            turtle_manager->move_righter();
+            if (_isEnabledPursuitProcessing)
+                pursuit_turtle_processor->resume_moving();
+            else
+                turtle_manager->move_righter();
             break;
         case EVENT_STOP_MOVING:
-            turtle_manager->stop_moving();
+            if (_isEnabledPursuitProcessing)
+                pursuit_turtle_processor->stop_moving();
+            else
+                turtle_manager->stop_moving();
             break;
+
+        case EVENT_ENABLE_PURSUIT:
+            if (!_isEnabledPursuitProcessing) {
+                turtle_manager->stop_processing_thread();
+                pursuit_turtle_processor->restart_processing_thread();
+                _isEnabledPursuitProcessing = true;
+            }
+            break;
+        case EVENT_DISABLE_PURSUIT:
+            if (_isEnabledPursuitProcessing) {
+                pursuit_turtle_processor->stop_processing_thread();
+                turtle_manager->restart_processing_thread();
+                _isEnabledPursuitProcessing = false;
+            }
+            break;
+
         case EVENT_CAM_ZM:
             on_zoom_minus_processor();
             break;

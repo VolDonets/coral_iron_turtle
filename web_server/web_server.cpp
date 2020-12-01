@@ -8,6 +8,9 @@
 MyHandler::MyHandler(MyServer* server) : _server(server){
     this->_delegate = DelegateWS::getInstance();
 
+    this->eventEnablePursuitProcessing = std::make_shared<EventWS>(EVENT_ENABLE_PURSUIT);
+    this->eventDisablePursuitProcessing = std::make_shared<EventWS>(EVENT_DISABLE_PURSUIT);
+
     this->eventMoveForward = std::make_shared<EventWS>(EVENT_MOVE_FORWARD);
     this->eventMoveBack = std::make_shared<EventWS>(EVENT_MOVE_BACK);
     this->eventMoveRighter = std::make_shared<EventWS>(EVENT_MOVE_RIGHTER);
@@ -130,6 +133,14 @@ void MyHandler::doEventHandling(const char *data) {
     }
     if (strcmp(data, COMMAND_CAM_LEFT) == 0) {
         _delegate->doEvent(eventCamLeft);
+        return;
+    }
+    if (strcmp(data, COMMAND_ENABLE_PURSUIT) == 0) {
+        _delegate->doEvent(eventEnablePursuitProcessing);
+        return;
+    }
+    if (strcmp(data, COMMAND_DISABLE_PURSUIT) == 0) {
+        _delegate->doEvent(eventDisablePursuitProcessing);
         return;
     }
 }
