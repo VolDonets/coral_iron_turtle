@@ -5,56 +5,60 @@
 #include "pursuit_processor.h"
 
 PursuitProcessor::PursuitProcessor() {
+    // now iron_turtle can't pursuit a human
+    _isCanMove = false;
 
+    // activate the serial device wrapper and read/write wrapping functions
+    _serialManager = std::make_shared<SerialManager>();
+
+    // now we haven't connected clients, so we shouldn't send control commands
+    _serverCounter = 0;
+
+    // now create an object for HoverboardAPI for the communication with
+    // a serial device (here connected the iron engines controller.
+    _ironTurtleAPI = std::make_shared<HoverboardAPI>(write_serial_wrapper);
+
+    // disable processing
+    _isProcessThread = false;
 }
 
 PursuitProcessor::PursuitProcessor(std::shared_ptr<SerialManager> serialManager) {
+    // now iron_turtle can't pursuit a human
+    _isCanMove = false;
 
+    // activate the serial device wrapper and read/write wrapping functions
+    _serialManager = serialManager;
+
+    // now we haven't connected clients, so we shouldn't send control commands
+    _serverCounter = 0;
+
+    // now create an object for HoverboardAPI for the communication with
+    // a serial device (here connected the iron engines controller.
+    _ironTurtleAPI = std::make_shared<HoverboardAPI>(write_serial_wrapper);
+
+    // disable processing
+    _isProcessThread = false;
 }
 
 PursuitProcessor::~PursuitProcessor() {
-
+    //Nothing to do here
 }
 
-int PursuitProcessor::x_offset(const cv::Rect& newPosition) {
-    // here we take a new position by x and plus a half of the object width (this means
-    // we calculate an object position, as absolute value), than from it we minus
-    // old position by x and minus a half of the old object width
-    return newPosition.x + (newPosition.width / 2) - fixedRectangleCoord.x - (fixedRectangleCoord.width / 2);
+void PursuitProcessor::say_server_here() {
+    _serverCounter = SERVER_WAIT_STEPS_PURSUIT;
 }
 
-double PursuitProcessor::y_delta_moving(const cv::Rect& newPosition) {
-    // Here we calculate a new object area and we calculate an old object area,
-    // than using a ration between area and roi's areas we can get a distance between
-    // the old object and the new object
-    double Sroi_0, Sroi_1;
-    Sroi_0 = fixedRectangleCoord.width * fixedRectangleCoord.height;
-    Sroi_1 = newPosition.width * newPosition.height;
-    return START_DISTANCE_TO_AN_OBJECT * ((Sroi_1 / Sroi_0) - 1);
+void PursuitProcessor::say_server_leave() {
+    stop_moving();
+    _serverCounter = 20;
 }
 
-void PursuitProcessor::update_current_speed_params() {
-
+void PursuitProcessor::stop_moving() {
+    _isCanMove = false;
 }
 
-void PursuitProcessor::move_faster_left_wheel() {
-
-}
-
-void PursuitProcessor::move_slower_left_wheel() {
-
-}
-
-void PursuitProcessor::move_fasted_right_wheel() {
-
-}
-
-void PursuitProcessor::move_slower_right_wheel() {
-
-}
-
-void PursuitProcessor::process_pursuit() {
-
+void PursuitProcessor::resume_moving() {
+    _isCanMove = true;
 }
 
 int PursuitProcessor::get_speed() {
@@ -66,25 +70,52 @@ int PursuitProcessor::get_battery_voltage() {
 }
 
 int PursuitProcessor::stop_processing_thread() {
-    return 0;
+    if (_isProcessThread) {
+        _isProcessThread = false;
+        std::this_thread::sleep_for(std::chrono::microseconds(SLEEP_THREAD_TIME_MS));
+        _ironTurtleAPI->sendSpeedData(0.0, 0.0, 0, 0, PROTOCOL_SOM_NOACK);
+        _mutexProc.unlock();
+    }
+    return SUCCESSFUL_OPERATION_PURSUIT;
 }
 
-int PursuitProcessor::restart_processing_thread(cv::Rect fixedRectangleCoord) {
-    return 0;
+int PursuitProcessor::restart_processing_thread() {
+    if (_isProcessThread) {
+        return SUCCESSFUL_OPERATION_PURSUIT;
+    }
+    if (_serialManager->isSerialOK()) {
+        _isProcessThread = true;
+        _mutexProc.lock();
+        process_pursuit_process();
+        return SUCCESSFUL_OPERATION_PURSUIT;
+    } else {
+        return SERIAL_MANAGER_PROBLEM_PURSUIT;
+    }
 }
 
 bool PursuitProcessor::is_process_moving() {
-    return false;
+    return _isProcessThread;
 }
 
-void PursuitProcessor::stop_moving() {
+void PursuitProcessor::add_aim_for_processing(std::pair<float, float> aim) {
+    _mutexRes.lock();
+    if (_aimsQueue.size() > MAX_COUNT_AIMS_IN_QUEUE)
+        _aimsQueue.pop_front();
+
+    _aimsQueue.push_front(aim);
+    _mutexProc.unlock();
+    _mutexRes.unlock();
 
 }
 
-void PursuitProcessor::say_server_here() {
+void PursuitProcessor::fix_angle_shift(float angleShift) {
 
 }
 
-void PursuitProcessor::say_server_leave() {
+void PursuitProcessor::fix_distance_shift(float distanceShift) {
+
+}
+
+void PursuitProcessor::process_pursuit_process() {
 
 }

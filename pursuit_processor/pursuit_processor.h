@@ -5,82 +5,109 @@
 #ifndef IRON_TURTLE_PURSUIT_PROCESSOR_H
 #define IRON_TURTLE_PURSUIT_PROCESSOR_H
 
-#include <list>
-#include <memory>
-#include <opencv2/core/types.hpp>
+#include <memory>   // used for class shared_ptr<> and make_shared<>()
+#include <thread>   // used for a thread creating
+#include <atomic>   // used for making class fields as atomic variables for the threads
+#include <list>     // used as a container for aims with angle and distance to the tracked body
+#include <mutex>    // used as a waiting points for the different threads
 
-
-#include "../turtle_manager/binary_com_manager/serial_manager.h"
+#include "../turtle_manager/binary_com_manager/serial_manager.h"                  //this .h-file contains my wrapper for the serial device
+#include "../turtle_manager/binary_com_manager/bipropellant-api/HoverboardAPI.h"  //this .h-file contains C++ class - wrapper for the C bipropellant API
 
 /** @brief this constant means how many steps should to wait a server thread before it decides, that client leave a connection
  *         that means we should to stop sending a commands.*/
-constexpr int SERVER_WAIT_STEPS = 10;
-/// @brief this constant is a code of the successful operation
-constexpr int SUCCESSFUL_OPERATION = 0;
-/// @brief this constant is s code of the unsuccessful operation - the reason is problems with connection to the serial devise.
-constexpr int SERIAL_MANAGER_PROBLEM = -1;
+constexpr int SERVER_WAIT_STEPS_PURSUIT = 10;
+/**
+ * @brief this constant is a code of the successful operation */
+constexpr int SUCCESSFUL_OPERATION_PURSUIT = 0;
+/**
+ * @brief this constant is s code of the unsuccessful operation - the reason is problems with connection to the serial devise. */
+constexpr int SERIAL_MANAGER_PROBLEM_PURSUIT = -1;
+/**
+ * @brief this constant contains a max count aims in the aims queue
+ */
+constexpr int MAX_COUNT_AIMS_IN_QUEUE = 3;
 
-/// @brief this is constant is a distance in mm from camera to the object
-constexpr double START_DISTANCE_TO_AN_OBJECT = 1000;  // TODO. I should measure it soon.
+/**
+ * @brief this constant contains a minimum angle shift which program can use */
+constexpr float ANGLE_ALLOWABLE_SHIFT = 0.1;
+/**
+ * @brief this constant constant contains a minimum distance shift which program can use */
+constexpr float DISTANCE_ALLOWABLE_SHIFT = 0.1;
 
-/** @brief This is class for the processing auto moving of the iron turtle.
- *  This has a start rectangle size and place and recalculate moving direction and speed by a new object rectangle and position.
- *  This recalculations works in other thread and gets data from the process camera thread.
- *  Possibly it can get data from other places.*/
+/** @brief The class PursuitProcessor is controller for the turtle engines throw the turtle engine controller with using the binary protocol.
+ *         It can manually move for the interested human.
+ *  @warning In your program please use only one object of this class, cause in constructor creates wrapper for the serial interface and
+ *          creates new thread for sending commands throw UART connection to the turtle engine controller.*/
 class PursuitProcessor {
 private:
-    /// @brief this is last fixed coord which was achieved by the iron turtle
-    cv::Rect fixedRectangleCoord;
-    /// @brief this a queue of the detected object coordinates
-    std::list<cv::Rect> newRectangleCoordsList;
-
-    /// @brief this function recalculate the current speed values for the right and the left wheels as wanted to achieve in the wanted values
-    void update_current_speed_params();
-
-    /// @brief this function sets a new value for the field wantedLeftWheelSpeed (INCREASE if possible)
-    void move_faster_left_wheel();
-
-    /// @brief this function sets a new value for the field wantedLeftWheelSpeed (DECREASE if possible)
-    void move_slower_left_wheel();
-
-    /// @brief this function sets a new value for the field wantedRightWheelSpeed (INCREASE if possible)
-    void move_fasted_right_wheel();
-
-    /// @brief this function sets a new value for the field wantedRightWheelSpeed (DECREASE if possible)
-    void move_slower_right_wheel();
-
-    /// @brief this function starts new thread for the wheel's speed processing and for the sending control commands to the turtle engine controller
-    void process_pursuit();
-
+    /** @brief this variable contains a server connection status (connection with client), if we have a client which is able to
+     *         manage the iron turtle, so we can to send commands to the iron turtle controller.
+     *         This variable decrease to 0, in the tread loop, and if a client says 'I'm here it will updates to SERVER_WAIT_STEPS,
+     *         otherwise the processor won't able to send a control command and the iron turtle just stop moving.*/
+    std::atomic<int> _serverCounter;
     /**
-     * @brief this function calculate an object position bias
-     * @param newPosition - a cv rectangle with a new object position
-     * @return current object bias (if haven't image it returns 0)
-     */
-    int x_offset(const cv::Rect &newPosition);
-
+     *  @brief this is a smart pointer to the wrapper for the serial device driver */
+    std::shared_ptr<SerialManager> _serialManager;
     /**
-     * @brief this function calculate an distance between an original object position and a new one.
-     * @param newPosition - a cv rectangle with a new object position
-     * @return distance between an original object position and a new one.
+     * @brief this is a smart pointer to the bipropellant API (C++ class wrapper of the C API).
      */
-    double y_delta_moving(const cv::Rect &newPosition);
+    std::shared_ptr<HoverboardAPI> _ironTurtleAPI;
+    /**
+     * @brief this is a bool variable, which means is now something are processed or no.
+     */
+    std::atomic<bool> _isProcessThread;
+    /**
+     * @brief this variable is a flag, is should to process moving or no*/
+    std::atomic<bool> _isCanMove;
+    /**
+     * @brief this field contains a queue of pairs of angle and delta moving */
+    std::list<std::pair<float, float>> _aimsQueue;
+    /** @brief This mutex synchronize a block code where we process a resources
+     *         (here is - std::list<cv::Mat> queueFrames)*/
+    std::mutex _mutexRes;
+    /** @brief This mutex used for blocking processing, it blocks code when we trying to process image, but actually we don't have a Mat object for this
+    *          (it means std::list<cv::Mat> queueFrames is empty)
+    *          Firstly it blocks when we are creating a PoseDetectorWrapper
+    *         class (calls in constructor)*/
+    std::mutex _mutexProc;
+
+    /** @brief this function fix angle shift just move the iron turtle body righter or lefter
+     *  @param angleShift - a shift angle for the current iron and human body position*/
+    void fix_angle_shift(float angleShift);
+    /** @brief this function fix distance to human body shift just move the iron turtle body forward or backward
+     *  @param distanceShift - a shift distance for the current iron and human body position.*/
+    void fix_distance_shift(float distanceShift);
+    /** @brief this function starts new thread for the wheel's speed processing
+     *         (here is a pursuit processing) and
+     *         for the sending control commands to the turtle engine controller */
+    void process_pursuit_process();
 
 public:
-    /** @brief this is a default constructor, here inits all needed fields
-     *  @warning this constructor doesn't start new thread so you should manually start it, for activating the pursuit function*/
+    /** @brief this is default constructor, here inits class fields
+    *  @warning this doesn't start a new thread for the processing (a bit changed logic).*/
     PursuitProcessor();
-
-    /** @brief this is a default constructor, here inits NOT all needed fields
-     *  @param serialManager - this is a driver wrapper for the working with serial device (here it's connected by UARD
-     *  the iron turtle engines controller
-     *  @warning this constructor doesn't start new thread so you should manually start it, for activating the pursuit function*/
+    /** @brief this is constructor with parameters
+     *  @param std::shared_ptr<SerialManager> serialManager - a driver wrapper for the working with a serial  device throw simple interface.
+     *  @warning this doesn't start a new thread for the processing (a bit changed logic).*/
     PursuitProcessor(std::shared_ptr<SerialManager> serialManager);
-
-    /** @brief this is a default destructor
-     *  @warning this one doing nothing */
     ~PursuitProcessor();
 
+    /**
+     * @brief a server call this function, when it has active connection with an active client */
+    void say_server_here();
+
+    /**
+     * @brief a server call this function, when it lost an active client */
+    void say_server_leave();
+
+    /** @brief this function sets _isCanMove as 'false'
+     *         called when client send command to STOP moving*/
+    void stop_moving();
+
+    /** @brief this function sets _isCanMove as 'true'
+     *         called when client send command to RESUME moving*/
+    void resume_moving();
 
     /** @brief this function returns current speed
      *  @return returns current speed */
@@ -96,21 +123,13 @@ public:
 
     /** @brief This function returns code of operation for the RESTARTING thread and it trying if possible to stop the processing thread.
      *  @return an operation result code */
-    int restart_processing_thread(cv::Rect fixedRectangleCoord);
+    int restart_processing_thread();
 
     /** @brief This function returns status of the processing thread. If a thread works - the function returns 'true', otherwise it returns - 'false'.
      *  @return an operation result code */
     bool is_process_moving();
 
-    /** @brief this function sets set wantedRightWheelSpeed, wantedLeftWheelSpeed and rightWheelSpeed, leftWheelSpeed as zero (0.0) value
-     *  called when client send command to STOP moving*/
-    void stop_moving();
-
-    /// @brief a server call this function, when it has active connection with an active client
-    void say_server_here();
-
-    /// @brief a server call this function, when it lost an active client
-    void say_server_leave();
+    void add_aim_for_processing(std::pair<float, float> aim);
 };
 
 
