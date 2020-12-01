@@ -7,8 +7,8 @@ var reportError;
 
 function onLocalDescription(desc) {
     console.log("Local description: " + JSON.stringify(desc));
-    webrtcPeerConnection.setLocalDescription(desc).then(function() {
-        ws.send(JSON.stringify({ type: "sdp", "data": webrtcPeerConnection.localDescription }));
+    webrtcPeerConnection.setLocalDescription(desc).then(function () {
+        ws.send(JSON.stringify({type: "sdp", "data": webrtcPeerConnection.localDescription}));
     }).catch(reportError);
 }
 
@@ -33,7 +33,7 @@ function onIceCandidate(event) {
         return;
 
     console.log("Sending ICE candidate out: " + JSON.stringify(event.candidate));
-    ws.send(JSON.stringify({ "type": "ice", "data": event.candidate }));
+    ws.send(JSON.stringify({"type": "ice", "data": event.candidate}));
 }
 
 function onServerMessage(event) {
@@ -56,16 +56,22 @@ function onServerMessage(event) {
     }
 
     switch (msg.type) {
-        case "sdp": onIncomingSDP(msg.data); break;
-        case "ice": onIncomingICE(msg.data); break;
-        default: break;
+        case "sdp":
+            onIncomingSDP(msg.data);
+            break;
+        case "ice":
+            onIncomingICE(msg.data);
+            break;
+        default:
+            break;
     }
 }
 
 function playStream(videoElement, configuration, reportErrorCB) {
     html5VideoElement = videoElement;
     webrtcConfiguration = configuration;
-    reportError = (reportErrorCB != undefined) ? reportErrorCB : function(text) {};
+    reportError = (reportErrorCB != undefined) ? reportErrorCB : function (text) {
+    };
 
     ws.addEventListener("message", onServerMessage);
 }
@@ -83,6 +89,9 @@ var isDOWN_ButtonPushed = false;
 var isRIGHT_ButtonPushed = false;
 var isLEFT_ButtonPushed = false;
 var isZERO_ButtonPushed = false;
+
+var isO_ButtonPushed = false;
+var isP_ButtonPushed = false;
 
 var isANY_ButtonPushed = false;
 
@@ -108,13 +117,18 @@ function set_keydown(key_code) {
         isA_ButtonPushed = true;
     else if (key_code === 'd' || key_code === 'D')
         isD_ButtonPushed = true;
+    else if (key_code === 'p' || key_code === 'P')
+        isP_ButtonPushed = true;
+    else if (key_code === 'o' || key_code === 'O')
+        isO_ButtonPushed = true;
     else if (key_code === '0')
         isZERO_ButtonPushed = true;
 
     if (isQ_ButtonPushed || isW_ButtonPushed || isE_ButtonPushed
         || isA_ButtonPushed || isS_ButtonPushed || isD_ButtonPushed
         || isUP_ButtonPushed || isDOWN_ButtonPushed || isLEFT_ButtonPushed
-        || isRIGHT_ButtonPushed || isZERO_ButtonPushed)
+        || isRIGHT_ButtonPushed || isZERO_ButtonPushed
+        || isO_ButtonPushed || isP_ButtonPushed)
         isANY_ButtonPushed = true;
 }
 
@@ -139,40 +153,45 @@ function set_keyup(key_code) {
         isA_ButtonPushed = false;
     else if (key_code === 'd' || key_code === 'D')
         isD_ButtonPushed = false;
+    else if (key_code === 'p' || key_code === 'P')
+        isP_ButtonPushed = false;
+    else if (key_code === 'o' || key_code === 'O')
+        isO_ButtonPushed = false;
     else if (key_code === '0')
         isZERO_ButtonPushed = false;
 
     if (!(isQ_ButtonPushed || isW_ButtonPushed || isE_ButtonPushed
         || isA_ButtonPushed || isS_ButtonPushed || isD_ButtonPushed
         || isUP_ButtonPushed || isDOWN_ButtonPushed || isLEFT_ButtonPushed
-        || isRIGHT_ButtonPushed || isZERO_ButtonPushed))
+        || isRIGHT_ButtonPushed || isZERO_ButtonPushed
+        || isO_ButtonPushed || isP_ButtonPushed))
         isANY_ButtonPushed = false;
 }
 
-function send_control_message(){
-    if(isANY_ButtonPushed){
+function send_control_message() {
+    if (isANY_ButtonPushed) {
         let json_str = "{\"comm\":["
         let isFirst = true;
 
-        if(isQ_ButtonPushed) {
+        if (isQ_ButtonPushed) {
             json_str += "\"ZCP\"";
             isFirst = false;
         }
-        if(isE_ButtonPushed) {
+        if (isE_ButtonPushed) {
             if (isFirst) {
                 json_str += "\"ZCM\"";
                 isFirst = false;
             } else
                 json_str += ",\"ZCM\"";
         }
-        if(isW_ButtonPushed) {
+        if (isW_ButtonPushed) {
             if (isFirst) {
                 json_str += "\"MCU\"";
                 isFirst = false;
             } else
                 json_str += ",\"MCU\"";
         }
-        if(isS_ButtonPushed) {
+        if (isS_ButtonPushed) {
             if (isFirst) {
                 json_str += "\"MCD\"";
                 isFirst = false;
@@ -180,14 +199,14 @@ function send_control_message(){
                 json_str += ",\"MCD\"";
 
         }
-        if(isA_ButtonPushed) {
+        if (isA_ButtonPushed) {
             if (isFirst) {
                 json_str += "\"MCL\"";
                 isFirst = false;
             } else
                 json_str += ",\"MCL\"";
         }
-        if(isD_ButtonPushed) {
+        if (isD_ButtonPushed) {
             if (isFirst) {
                 json_str += "\"MCR\"";
                 isFirst = false;
@@ -195,7 +214,7 @@ function send_control_message(){
                 json_str += ",\"MCR\"";
         }
 
-        if(isUP_ButtonPushed) {
+        if (isUP_ButtonPushed) {
             // now if we push the UP button the iron turtle will move in the backward direction, so I change command
             if (isFirst) {
                 json_str += "\"MTD\"";
@@ -203,7 +222,7 @@ function send_control_message(){
             } else
                 json_str += ",\"MTD\"";
         }
-        if(isDOWN_ButtonPushed) {
+        if (isDOWN_ButtonPushed) {
             // now if we push the DOWN button the iron turtle will move in the forward direction, so I change command
             if (isFirst) {
                 json_str += "\"MTU\"";
@@ -211,7 +230,7 @@ function send_control_message(){
             } else
                 json_str += ",\"MTU\"";
         }
-        if(isRIGHT_ButtonPushed) {
+        if (isRIGHT_ButtonPushed) {
             if (isFirst) {
                 json_str += "\"MTR\"";
                 isFirst = false;
@@ -219,7 +238,7 @@ function send_control_message(){
                 json_str += ",\"MTR\"";
             }
         }
-        if(isLEFT_ButtonPushed) {
+        if (isLEFT_ButtonPushed) {
             if (isFirst) {
                 json_str += "\"MTL\"";
                 isFirst = false;
@@ -227,19 +246,33 @@ function send_control_message(){
                 json_str += ",\"MTL\"";
             }
         }
-        if(isZERO_ButtonPushed) {
+        if (isZERO_ButtonPushed) {
             if (isFirst) {
                 json_str += "\"MTS\"";
             } else {
                 json_str += ",\"MTS\"";
             }
         }
-        json_str += "]}";
+        if (isP_ButtonPushed) {
+            if (isFirst) {
+                json_str += "\"EPP\"";
+            } else {
+                json_str += ",\"EPP\"";
+            }
+        }
+        if (isO_ButtonPushed) {
+            if (isFirst) {
+                json_str += "\"DPP\"";
+            } else {
+                json_str += ",\"DPP\"";
+            }
+        }
+            json_str += "]}";
         ws.send(json_str);
     }
 }
 
-function scheduled_sender(){
+function scheduled_sender() {
     ws.send("{\"comm\":[\"OK\"]}");
 }
 
@@ -254,7 +287,7 @@ $(function begin() {
     });
 
     document.addEventListener('keyup', (e) => {
-       set_keyup(e.key);
+        set_keyup(e.key);
     });
 
     $('#id_form_button_left').click(function onClick(e) {
@@ -272,7 +305,7 @@ $(function begin() {
 
     ws = new WebSocket('ws://' + document.location.host + '/chart', ['string', 'foo']);
     let vidstream = document.getElementById("stream");
-    let config = { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] };
+    let config = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]};
 
     ws.onopen = function () {
         console.log('onopen');
@@ -285,6 +318,8 @@ $(function begin() {
     ws.onerror = function (error) {
     };
 
-    playStream(vidstream, config, function (errmsg) { console.error(errmsg); });
+    playStream(vidstream, config, function (errmsg) {
+        console.error(errmsg);
+    });
     let messageSender = setInterval(scheduled_sender, 100);
 });
