@@ -199,9 +199,10 @@ int SmoothTurtleManager::get_battery_voltage() {
 int SmoothTurtleManager::stop_processing_thread() {
     if (isProcessThread) {
         isProcessThread = false;
-        stop_processing_thread();
         std::this_thread::sleep_for(std::chrono::microseconds(SLEEP_THREAD_TIME_MS));
         ironTurtleAPI->sendSpeedData(0.0, 0.0, 0, 0, PROTOCOL_SOM_NOACK);
+        stop_moving();
+        movingProcessingThread.detach();
     }
     return SUCCESSFUL_OP;
 }
