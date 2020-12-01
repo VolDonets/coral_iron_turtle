@@ -64,8 +64,8 @@ private:
      *         (means finding a key points of the human pose)*/
     std::list<cv::Mat> _queueFrames;
 
-    /** @brief This is a queue of detected poses for the lastFrames. */
-    std::list<std::vector<DetectedPose>> _queueDetectedPoses;
+    /** @brief This is a queue pairs of vector detected poses for the last frame + index the most interest pose. */
+    std::list<std::pair<int, std::vector<DetectedPose>>> _queueDetectedPoses;
 
     /** @brief This is a thread for detecting a key point, it used for separating
      *         other processes from the keypoints detection. */
@@ -138,7 +138,7 @@ private:
     void process_pose_detection();
 
     /** @brief This find from all poses the most suitable pose according with current interest center */
-    void find_the_most_suitable_pose(std::vector<DetectedPose> &detectedPoses);
+    void find_the_most_suitable_pose(int &inxInterestPose, std::vector<DetectedPose> &detectedPoses);
 
 public:
     /** @brief this a default constructor, here inits all needed fields*/

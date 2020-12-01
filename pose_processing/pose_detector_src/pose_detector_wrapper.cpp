@@ -185,6 +185,7 @@ PoseDetectorWrapper::get_pose_estimate_from_output_raw_data(const std::vector<fl
 void PoseDetectorWrapper::process_pose_detection() {
     _keyPointDetectionThread = std::thread([this]() {
         cv::Mat currentFrame;
+        int inxInterestPose;
         while (_isProcessThread) {
             _mutexProc.lock();
             _mutexRes.lock();
@@ -196,10 +197,11 @@ void PoseDetectorWrapper::process_pose_detection() {
             std::vector<float> rawOutputData = get_raw_output_data_from_model(inputData);
             std::vector<DetectedPose> detectedPoses = get_pose_estimate_from_output_raw_data(rawOutputData,
                                                                                              POSE_THRESHOLD);
-            find_the_most_suitable_pose(detectedPoses);
+            inxInterestPose = 0;
+            find_the_most_suitable_pose(inxInterestPose, detectedPoses);
             if (_queueDetectedPoses.size() > MAX_COUNT_POSE_VECTORS_IN_QUEUE)
                 _queueDetectedPoses.pop_front();
-            _queueDetectedPoses.push_back(detectedPoses);
+            _queueDetectedPoses.push_back(std::pair(inxInterestPose, detectedPoses));
             if (!_queueFrames.empty()) {
                 _mutexProc.unlock();
             }
@@ -208,7 +210,8 @@ void PoseDetectorWrapper::process_pose_detection() {
 }
 
 void PoseDetectorWrapper::draw_last_pose_on_image(cv::Mat &frame) {
-    cv::circle(frame, cv::Point(_interestAreaCenterCoordinate.first, _interestAreaCenterCoordinate.second), 30,
+    cv::circle(frame, cv::Point(static_cast<int>(_interestAreaCenterCoordinate.first),
+                                static_cast<int>(_interestAreaCenterCoordinate.second)), 30,
                cv::Scalar(0, 255, 0), 2, cv::LINE_8, 0);
     if (_initWaitSteps < 75) {
         std::string strLine = "";
@@ -231,50 +234,50 @@ void PoseDetectorWrapper::draw_last_pose_on_image(cv::Mat &frame) {
     float camera_height = frame.rows;
     if (!_queueDetectedPoses.empty()) {
         const auto &green = cv::Scalar(255, 0, 0);
-        for (auto &candidate : _queueDetectedPoses.front()) {
-            std::vector<int> k_x(17), k_y(17);
-            for (int i = 0; i < 17; i++) {
-                if (candidate.keypointScores[i] > POSE_THRESHOLD) {
-                    float x_coordinate =
-                            candidate.keypointCoordinates[(2 * i) + 1] * (camera_width / _widthInputLayerPoseNetModel);
-                    float y_coordinate =
-                            candidate.keypointCoordinates[2 * i] * (camera_height / _heightInputLayerPoseNetModel);
-                    k_x[i] = static_cast<int>(x_coordinate);
-                    k_y[i] = static_cast<int>(y_coordinate);
-                    cv::circle(frame, cv::Point(k_x[i], k_y[i]), 0, green, 6, 1, 0);
-                    std::string str = "-" + std::to_string(i);
-                    cv::putText(frame, str, cv::Point(k_x[i] + 5, k_y[i] + 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
-                                cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
-                } else {
-                    k_x[i] = -1;
-                }
-            }
+        std::pair<int, std::vector<DetectedPose>> &interestPair = _queueDetectedPoses.front();
+        DetectedPose &candidate = interestPair.second[interestPair.first];
 
-            float angle = 0.0;
+        std::vector<int> k_x(17), k_y(17);
+        for (int i = 0; i < 17; i++) {
+            if (candidate.keypointScores[i] > POSE_THRESHOLD) {
+                float x_coordinate =
+                        candidate.keypointCoordinates[(2 * i) + 1] * (camera_width / _widthInputLayerPoseNetModel);
+                float y_coordinate =
+                        candidate.keypointCoordinates[2 * i] * (camera_height / _heightInputLayerPoseNetModel);
+                k_x[i] = static_cast<int>(x_coordinate);
+                k_y[i] = static_cast<int>(y_coordinate);
+                cv::circle(frame, cv::Point(k_x[i], k_y[i]), 0, green, 6, 1, 0);
+                std::string str = "-" + std::to_string(i);
+                cv::putText(frame, str, cv::Point(k_x[i] + 5, k_y[i] + 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
+                            cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
+            } else {
+                k_x[i] = -1;
+            }
+        }
+
+        float angle = 0.0;
 //            _poseAngleEngine->get_angle(angle, k_x, k_y);
-            _poseParamEngine->get_angle_no_dist(angle, k_x, k_y);
-            angle = (180 * angle) / 3.14;
+        _poseParamEngine->get_angle_no_dist(angle, k_x, k_y);
+        angle = (180 * angle) / 3.14;
 
-            std::string strLine = "Pose angle: " + std::to_string(angle);
-            cv::putText(frame, strLine, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
-                        cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
+        std::string strLine = "Pose angle: " + std::to_string(angle);
+        cv::putText(frame, strLine, cv::Point(10, 50), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
+                    cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
 
-            strLine = "Eyes distance: " + std::to_string(_poseParamEngine->get_eyes_distance());
+//            strLine = "Eyes distance: " + std::to_string(_poseParamEngine->get_eyes_distance());
+//            cv::putText(frame, strLine, cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
+//                        cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
+//            strLine = "Shoulder distance: " + std::to_string(_poseParamEngine->get_shoulder_distance());
+//            cv::putText(frame, strLine, cv::Point(10, 90), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
+//                        cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
+        std::pair<float, float> poseParam;
+        if (_poseParamEngine->get_xy_offset_no_dist(poseParam, k_x, k_y)) {
+            strLine = "Angle offset: " + std::to_string((180 * poseParam.first) / 3.14) + "°";
             cv::putText(frame, strLine, cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
-                        cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
-            strLine = "Shoulder distance: " + std::to_string(_poseParamEngine->get_shoulder_distance());
+                        cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
+            strLine = "Dist to object: " + std::to_string(poseParam.second) + "m";
             cv::putText(frame, strLine, cv::Point(10, 90), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
-                        cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
-            std::pair<float, float> poseParam;
-            if (_poseParamEngine->get_xy_offset_no_dist(poseParam, k_x, k_y)) {
-                strLine = "Angle offset: " + std::to_string((180 * poseParam.first) / 3.14) + "°";
-                cv::putText(frame, strLine, cv::Point(10, 110), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
-                            cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
-                strLine = "Dist to object: " + std::to_string(poseParam.second) + "m";
-                cv::putText(frame, strLine, cv::Point(10, 130), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
-                            cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
-            }
-            break;
+                        cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
         }
     }
 }
@@ -300,7 +303,7 @@ PoseDetectorWrapper::build_edge_tpu_interpreter(const tflite::FlatBufferModel &m
     return interpreter;
 }
 
-void PoseDetectorWrapper::find_the_most_suitable_pose(std::vector<DetectedPose> &detectedPoses) {
+void PoseDetectorWrapper::find_the_most_suitable_pose(int &inxInterestPose, std::vector<DetectedPose> &detectedPoses) {
     int inxTheMostInterested = 0;
     float distanceBetweenCenters = 7777777; // maximum value as possible
     float superMiddleX = _interestAreaCenterCoordinate.first,
@@ -312,31 +315,29 @@ void PoseDetectorWrapper::find_the_most_suitable_pose(std::vector<DetectedPose> 
         for (int i = 0; i < 17; i++) {
             if (detectedPoses[inx].keypointScores[i] > POSE_THRESHOLD) {
                 float x_coordinate =
-                        detectedPoses[inx].keypointCoordinates[(2 * i) + 1] * (640 / _widthInputLayerPoseNetModel);
+                        detectedPoses[inx].keypointCoordinates[(2 * i) + 1] * (640.0 / _widthInputLayerPoseNetModel);
                 float y_coordinate =
-                        detectedPoses[inx].keypointCoordinates[2 * i] * (480 / _heightInputLayerPoseNetModel);
+                        detectedPoses[inx].keypointCoordinates[2 * i] * (480.0 / _heightInputLayerPoseNetModel);
                 middleX += static_cast<int>(x_coordinate);
                 middleY += static_cast<int>(y_coordinate);
                 countOKPoints++;
             }
         }
-        middleX /= countOKPoints;
-        middleY /= countOKPoints;
-        float currentDistanceBetweenCenter = sqrt(pow(_interestAreaCenterCoordinate.first - middleX, 2) +
-                                                  pow(_interestAreaCenterCoordinate.second - middleY, 2));
-        if (distanceBetweenCenters > currentDistanceBetweenCenter) {
-            distanceBetweenCenters = currentDistanceBetweenCenter;
-            inxTheMostInterested = inx;
-            superMiddleX = middleX;
-            superMiddleY = middleY;
+        if (countOKPoints > 0) {
+            middleX /= countOKPoints;
+            middleY /= countOKPoints;
+            float currentDistanceBetweenCenter = sqrt(pow(_interestAreaCenterCoordinate.first - middleX, 2) +
+                                                      pow(_interestAreaCenterCoordinate.second - middleY, 2));
+            if (distanceBetweenCenters > currentDistanceBetweenCenter) {
+                distanceBetweenCenters = currentDistanceBetweenCenter;
+                inxTheMostInterested = inx;
+                superMiddleX = middleX;
+                superMiddleY = middleY;
+            }
         }
     }
 
-    if (inxTheMostInterested != 0) {
-        DetectedPose &copy = detectedPoses[inxTheMostInterested];
-        detectedPoses[inxTheMostInterested] = detectedPoses[0];
-        detectedPoses[0] = copy;
-        _interestAreaCenterCoordinate.first = superMiddleX;
-        _interestAreaCenterCoordinate.second = superMiddleY;
-    }
+    inxInterestPose = inxTheMostInterested;
+    _interestAreaCenterCoordinate.first = superMiddleX;
+    _interestAreaCenterCoordinate.second = superMiddleY;
 }
