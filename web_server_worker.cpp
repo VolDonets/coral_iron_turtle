@@ -12,6 +12,7 @@ WebServerWorker::WebServerWorker() {
     // creating an object of TurtleManager with connecting throw COM-port
     turtle_manager = make_shared<SmoothTurtleManager>(serialManager);
     pursuit_turtle_processor = make_shared<PursuitProcessor>(serialManager);
+    set_pursuit_processor(pursuit_turtle_processor);
 
     // starting the iron turtle moving processing thread
     // by default the iron turtle moves by custom commands
@@ -70,15 +71,17 @@ void WebServerWorker::handleEventWS(std::shared_ptr<EventWS> event) {
                 turtle_manager->move_backward();
             break;
         case EVENT_MOVE_LEFTER:
-            if (_isEnabledPursuitProcessing)
-                pursuit_turtle_processor->resume_moving();
-            else
+            if (_isEnabledPursuitProcessing) {
+                //pursuit_turtle_processor->resume_moving();
+                pursuit_turtle_processor->add_aim_for_processing(std::pair<float, float>(0.52, 0));
+            } else
                 turtle_manager->move_lefter();
             break;
         case EVENT_MOVE_RIGHTER:
-            if (_isEnabledPursuitProcessing)
-                pursuit_turtle_processor->resume_moving();
-            else
+            if (_isEnabledPursuitProcessing) {
+                //pursuit_turtle_processor->resume_moving();
+                pursuit_turtle_processor->add_aim_for_processing(std::pair<float, float>(-0.52, 0));
+            } else
                 turtle_manager->move_righter();
             break;
         case EVENT_STOP_MOVING:
