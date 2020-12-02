@@ -34,6 +34,22 @@ constexpr float ANGLE_ALLOWABLE_SHIFT = 0.1;
 /**
  * @brief this constant constant contains a minimum distance shift which program can use */
 constexpr float DISTANCE_ALLOWABLE_SHIFT = 0.1;
+/// max wheel speed in m/s
+constexpr float MAX_SPEED = 0.597;
+/// max wheel speed-up in m/s2
+constexpr float MAX_SPEED_UP = 3.32;
+/// maximum distance which move wheel with current acceleration
+constexpr float DIST_ASSEL = 1.0746;
+/// maximum count steps for achieving maximum speed
+constexpr int MAX_COUNT_ASSEL_STEP = 60;
+/// time which we should wait before update speed data
+constexpr float UPDATE_SPEED_TIME_OUT_SECONDS = 0.03;
+/// time which we should wait before update speed data
+constexpr float SPEED_UP_STEP = 0.005;
+/// value for changing power
+constexpr int POWER_CHANGE_STEP = 50;
+/// the maximum power value
+constexpr int POWER_MAX_VALUE = 300;
 
 /** @brief The class PursuitProcessor is controller for the turtle engines throw the turtle engine controller with using the binary protocol.
  *         It can manually move for the interested human.
@@ -71,6 +87,11 @@ private:
     *          Firstly it blocks when we are creating a PoseDetectorWrapper
     *         class (calls in constructor)*/
     std::mutex _mutexProc;
+    /**
+     * @brief this thread used for processing new speed values for the right and the left wheels, and send it to the turtle engine controller */
+    std::thread _movingProcessingThread;
+
+    void universal_shift_fix(float distShift, float leftWheelFactor, float rightWheelFactor, int direction);
 
     /** @brief this function fix angle shift just move the iron turtle body righter or lefter
      *  @param angleShift - a shift angle for the current iron and human body position*/
@@ -129,6 +150,11 @@ public:
      *  @return an operation result code */
     bool is_process_moving();
 
+    /** @brief this function adds an aim in the aimsQueue, where aim
+     * @param aim is a pair<float, float>,
+     *        where first is angle shift
+     *        second is a distance shift
+     */
     void add_aim_for_processing(std::pair<float, float> aim);
 };
 
