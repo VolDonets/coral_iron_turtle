@@ -272,12 +272,15 @@ void PoseDetectorWrapper::draw_last_pose_on_image(cv::Mat &frame) {
 //                        cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
         std::pair<float, float> poseParam;
         if (_poseParamEngine->get_xy_offset_no_dist(poseParam, k_x, k_y)) {
-            strLine = "Angle offset: " + std::to_string((180 * poseParam.first) / 3.14) + "°";
+            strLine = "Angle offset: " + std::to_string((180 * poseParam.first) / 3.14) + "@";
             cv::putText(frame, strLine, cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
                         cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
             strLine = "Dist to object: " + std::to_string(poseParam.second) + "m";
             cv::putText(frame, strLine, cv::Point(10, 90), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
                         cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
+            if (_pursuitProcessor != nullptr) {
+                _pursuitProcessor->add_aim_for_processing(poseParam);
+            }
         }
     }
 }
@@ -340,4 +343,8 @@ void PoseDetectorWrapper::find_the_most_suitable_pose(int &inxInterestPose, std:
     inxInterestPose = inxTheMostInterested;
     _interestAreaCenterCoordinate.first = superMiddleX;
     _interestAreaCenterCoordinate.second = superMiddleY;
+}
+
+void PoseDetectorWrapper::set_pursuit_processor(std::shared_ptr<PursuitProcessor> pursuitProcessor) {
+    _pursuitProcessor = pursuitProcessor;
 }

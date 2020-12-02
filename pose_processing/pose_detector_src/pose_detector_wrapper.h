@@ -21,6 +21,7 @@
 
 #include "../posenet/posenet_decoder_op.h"
 #include "../pose_param_detection_src/pose_param_engine.h"
+#include "../../pursuit_processor/pursuit_processor.h"
 
 /** @brief This constant contains a code of successful operation. */
 const int CODE_STATUS_OK = 0;
@@ -109,6 +110,10 @@ private:
      *         (also it can be a height of the input neuron network layer).*/
     int _heightInputLayerPoseNetModel;
 
+    /** @brief this is a reference on PursuitProcessor
+     *        for manual chasing by a human body*/
+    std::shared_ptr<PursuitProcessor> _pursuitProcessor;
+
     std::unique_ptr<tflite::Interpreter>
     build_edge_tpu_interpreter(const tflite::FlatBufferModel &model, edgetpu::EdgeTpuContext *edgetpu_context);
 
@@ -172,6 +177,10 @@ public:
     /** @brief This function draw pose on the any frame (it can draw, or no, dependently from detection status)
      *  @param frame - this is a pointer to image, on which can be drawn pose pointers*/
     void draw_last_pose_on_image(cv::Mat &frame);
+
+    /** @brief This function sets an object of PursuitProcessor for this class
+     *  @param pursuitProcessor - a smart pointer on the object of the PursuitProcessor*/
+     void set_pursuit_processor(std::shared_ptr<PursuitProcessor> pursuitProcessor);
 };
 
 
