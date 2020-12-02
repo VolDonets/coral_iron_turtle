@@ -8,6 +8,7 @@
 #include "rear_sight_processor/image_processing.h"
 #include "rear_sight_processor/rear_sight_processor.h"
 #include "../pose_processing/pose_detector_src/pose_detector_wrapper.h"
+#include "../pursuit_processor/pursuit_processor.h"
 
 #include <locale.h>
 #include <glib.h>
@@ -29,6 +30,8 @@
 /** This .h file created in the C++ class style, but, cause some functions are called in other places, I cannot use a class structure,
  * so this one just initialize variables for processing a frame, and an object recognition object (here is also the thread for this processing).*/
 void init_rear_sight_processor();
+
+void set_pursuit_processor(std::shared_ptr<PursuitProcessor> processor);
 
 /// This function is manage a cropping process, and this one DECREASE a cropped image size
 void on_zoom_plus_processor();
@@ -82,5 +85,8 @@ static std::string current_speed = "Speed LW=0, RW=0";
 /** this is an object with PoseDetectorWrapper with detect poses on each frame from a video stream and helps to draw it
  * the current frame. */
 static std::unique_ptr<PoseDetectorWrapper> s_poseDetectorWrapper;
+
+/** this is an object with PursuitProcessor */
+static std::shared_ptr<PursuitProcessor> myPursuitProcessor;
 
 #endif //IRON_TURTLE_REAR_SIGHT_WEBRTC_MANIPULATION_H

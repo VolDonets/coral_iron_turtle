@@ -134,6 +134,7 @@ void create_and_run_pipeline() {
 int start_gst_loop() {
     s_poseDetectorWrapper = std::make_unique<PoseDetectorWrapper>();
     s_poseDetectorWrapper->start_pose_detection();
+    s_poseDetectorWrapper->set_pursuit_processor(myPursuitProcessor);
 
     setlocale(LC_ALL, "");
     gst_init(nullptr, nullptr);
@@ -189,4 +190,8 @@ void on_move_down_processor() {
 void set_speed_values_gst_pipeline_info(double currentLeftSpeed, double currentRightSpeed) {
     current_speed = "Speed LW=" + std::to_string((int) (currentLeftSpeed * 1000))
                     + ", RW=" + std::to_string((int) (currentRightSpeed * 1000));
+}
+
+void set_pursuit_processor(std::shared_ptr<PursuitProcessor> processor) {
+    myPursuitProcessor = processor;
 }
