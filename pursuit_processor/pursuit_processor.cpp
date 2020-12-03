@@ -118,7 +118,7 @@ PursuitProcessor::universal_shift_fix(float distShift, float leftWheelFactor, fl
     // fix inaccuracy from speed-up process
     distShift += 0.1;
 
-    int currentPowerValue = 0;
+    //int currentPowerValue = 0;
     float currentSpeedValue = 0;
 
     int accelSteps = 0;
@@ -136,28 +136,32 @@ PursuitProcessor::universal_shift_fix(float distShift, float leftWheelFactor, fl
 
     for (int i = 0; i < accelSteps && _isCanMove; i++) {
         currentSpeedValue += SPEED_UP_STEP;
-        currentPowerValue =
-                (currentPowerValue <= POWER_MAX_VALUE) ? currentPowerValue + POWER_CHANGE_STEP : POWER_MAX_VALUE;
+//        currentPowerValue =
+//                (currentPowerValue <= POWER_MAX_VALUE) ? currentPowerValue + POWER_CHANGE_STEP : POWER_MAX_VALUE;
         _ironTurtleAPI->sendSpeedData(leftWheelFactor * currentSpeedValue * direction,
                                       rightWheelFactor * currentSpeedValue * direction,
-                                      currentPowerValue, MIN_WHEELS_START_SPEED_VALUE, PROTOCOL_SOM_NOACK);
+//                                      currentPowerValue,
+                                      POWERS[(i < 7) ? i : 12],
+                                      MIN_WHEELS_START_SPEED_VALUE, PROTOCOL_SOM_NOACK);
         std::this_thread::sleep_for(std::chrono::microseconds(SLEEP_THREAD_TIME_MS));
     }
 
     for (int i = 0; i < maxSpeedSteps && _isCanMove; i++) {
         _ironTurtleAPI->sendSpeedData(leftWheelFactor * currentSpeedValue * direction,
                                       rightWheelFactor * currentSpeedValue * direction,
-                                      currentPowerValue, MIN_WHEELS_START_SPEED_VALUE, PROTOCOL_SOM_NOACK);
+                                      POWER_MAX_VALUE, MIN_WHEELS_START_SPEED_VALUE, PROTOCOL_SOM_NOACK);
         std::this_thread::sleep_for(std::chrono::microseconds(SLEEP_THREAD_TIME_MS));
     }
 
-    for (int i = 0; i < accelSteps && _isCanMove; i++) {
+    for (int i = (accelSteps - 1); i >= 0 && _isCanMove; i--) {
         currentSpeedValue -= SPEED_UP_STEP;
-        currentPowerValue =
-                (currentPowerValue > 0) ? currentPowerValue - POWER_CHANGE_STEP : POWER_MAX_VALUE;
+//        currentPowerValue =
+//                (currentPowerValue > 0) ? currentPowerValue - POWER_CHANGE_STEP : POWER_MAX_VALUE;
         _ironTurtleAPI->sendSpeedData(leftWheelFactor * currentSpeedValue * direction,
                                       rightWheelFactor * currentSpeedValue * direction,
-                                      currentPowerValue, MIN_WHEELS_START_SPEED_VALUE, PROTOCOL_SOM_NOACK);
+//                                      currentPowerValue,
+                                      POWERS[(i < 7) ? i : 12],
+                                      MIN_WHEELS_START_SPEED_VALUE, PROTOCOL_SOM_NOACK);
         std::this_thread::sleep_for(std::chrono::microseconds(SLEEP_THREAD_TIME_MS));
     }
 

@@ -26,7 +26,7 @@ constexpr int SERIAL_MANAGER_PROBLEM_PURSUIT = -1;
 /**
  * @brief this constant contains a max count aims in the aims queue
  */
-constexpr int MAX_COUNT_AIMS_IN_QUEUE = 3;
+constexpr int MAX_COUNT_AIMS_IN_QUEUE = 2;
 
 /**
  * @brief this constant contains a minimum angle shift which program can use */
@@ -50,6 +50,9 @@ constexpr float SPEED_UP_STEP = 0.005;
 constexpr int POWER_CHANGE_STEP = 50;
 /// the maximum power value
 constexpr int POWER_MAX_VALUE = 300;
+                           //0  1  2    3   4     5    6    7    8    9   10    11   12   13   14
+/// this array contains a power values for smooth moving
+static const int POWERS[] = {0, 50, 100, 150, 200, 250, 300};
 
 /** @brief The class PursuitProcessor is controller for the turtle engines throw the turtle engine controller with using the binary protocol.
  *         It can manually move for the interested human.
