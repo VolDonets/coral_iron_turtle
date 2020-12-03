@@ -235,6 +235,8 @@ void PoseDetectorWrapper::draw_last_pose_on_image(cv::Mat &frame) {
     if (!_queueDetectedPoses.empty()) {
         const auto &green = cv::Scalar(255, 0, 0);
         std::pair<int, std::vector<DetectedPose>> &interestPair = _queueDetectedPoses.front();
+        if (interestPair.second.empty())
+            return;
         DetectedPose &candidate = interestPair.second[interestPair.first];
 
         std::vector<int> k_x(17), k_y(17);
