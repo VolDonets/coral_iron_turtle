@@ -61,6 +61,10 @@ private:
      *  @param yCoords - const ref to vector of y coordinates of each pose points */
     void init_angle_detector_no_dist(const std::vector<int> &xCoords, const std::vector<int> &yCoords);
 
+    /** @brief this function fix camera distance smoothing
+     *  @param calculatedDist - linearly calculated distance, which need to fix*/
+    double fix_cam_dist_smoothing(double calculatedDist);
+
 public:
     /** @brief this is a standard constructor
      *  @param isModelHasFaceBasePoints - is a flag for using or no using face points
