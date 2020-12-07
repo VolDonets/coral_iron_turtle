@@ -30,7 +30,7 @@ constexpr int MAX_COUNT_AIMS_IN_QUEUE = 2;
 
 /**
  * @brief this constant contains a minimum angle shift which program can use */
-constexpr float ANGLE_ALLOWABLE_SHIFT = 0.1;
+constexpr float ANGLE_ALLOWABLE_SHIFT = 0.15;
 /**
  * @brief this constant constant contains a minimum distance shift which program can use */
 constexpr float DISTANCE_ALLOWABLE_SHIFT = 0.1;
