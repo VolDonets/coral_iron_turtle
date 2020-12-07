@@ -174,7 +174,8 @@ PursuitProcessor::universal_shift_fix(float distShift, float leftWheelFactor, fl
 void PursuitProcessor::fix_angle_shift(float angleShift) {
     // first calculate a distance which should rotate one wheel for moving
     // distance between wheels is 0.3m, so I can calculate rotation for one wheel
-    float rotDist = 0.3 * sinf(fabsf(angleShift));
+    // here I have added an fixing an angle error fixing
+    float rotDist = 0.3 * sinf(fabsf(angleShift)) + 0.1;
 
     // just for removing possible bugs
     if (rotDist < 0) return;
@@ -186,7 +187,7 @@ void PursuitProcessor::fix_angle_shift(float angleShift) {
 }
 
 void PursuitProcessor::fix_distance_shift(float distanceShift) {
-    universal_shift_fix(fabs(distanceShift), 1, 1,
+    universal_shift_fix(fabs(distanceShift) + 0.15, 1, 1,
                         (distanceShift > 0) ? 1 : -1);
 }
 
@@ -205,8 +206,7 @@ void PursuitProcessor::process_pursuit_process() {
 
             if ((fabsf(currentAim.first) > ANGLE_ALLOWABLE_SHIFT) && _isCanMove) {
                 fix_angle_shift(currentAim.first);
-            }
-            if ((fabs(currentAim.second) > DISTANCE_ALLOWABLE_SHIFT) && _isCanMove) {
+            } else if ((fabs(currentAim.second) > DISTANCE_ALLOWABLE_SHIFT) && _isCanMove) {
                 fix_distance_shift(currentAim.second);
             }
             if (!_aimsQueue.empty())
