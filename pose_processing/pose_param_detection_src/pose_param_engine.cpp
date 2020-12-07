@@ -234,6 +234,11 @@ bool PoseParamEngine::get_xy_offset_no_dist(std::pair<float, float> &xy_offset, 
     //TODO - !?possibly I should add kinda camera interface for making this interface universal
     _lastXYoffset.second = 2.907 * (1 - (bodyWidth / ((_rightBodyDistanceOnImage + _leftBodyDistanceOnImage) / 2)));
     _lastXYoffset.second = fix_cam_dist_smoothing(_lastXYoffset.second);
+    // this fix function overlapping for removing unpredictable behavior
+    if (_lastXYoffset.second < -1)
+        _lastXYoffset.second = 0.0;
+    if (_lastXYoffset.second > 4)
+        _lastXYoffset.second = 0.0;
     // I have measured a camera angle as 150 degrees, so now I can use a proportion
     _lastXYoffset.first = (2.62 * (bodyCenterCoordinate.first - (_widthImage / 2))) / _widthImage;
 
