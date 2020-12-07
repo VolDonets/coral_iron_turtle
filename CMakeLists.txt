@@ -60,6 +60,10 @@ add_executable(coral_iron_turtle
         pursuit_processor/pursuit_processor.h
         pursuit_processor/pursuit_processor.cpp
 
+###      this is the source code for detecting depth via an intel realsense camera
+        process_camera/intel_realsense_camera/realsense_processor.h
+        process_camera/intel_realsense_camera/realsense_processor.cpp
+
 ###      this is the source code for the image processing in the gst pipeline
         process_camera/rear_sight_processor/image_processing.h
         process_camera/rear_sight_processor/rear_sight_processor.h
@@ -78,7 +82,7 @@ add_executable(coral_iron_turtle
 
         pose_processing/pose_detector_src/pose_detector_wrapper.h
         pose_processing/pose_detector_src/pose_detector_wrapper.cpp
-)
+        )
 
 
 dep_edgetpu_tsl(coral_iron_turtle)
@@ -95,6 +99,13 @@ target_compile_definitions(coral_iron_turtle PRIVATE MY_DEBUG)
 target_link_libraries(coral_iron_turtle seasocks "${ZLIB_LIBRARIES}")
 ###       Adding to the project
 target_link_libraries(coral_iron_turtle pthread z)
+
+###       For possibility to use an intel realsense camera we need to use an intel api for the RealSense cameras
+###       here is a camera model: D415
+target_link_libraries(coral_iron_turtle realsense2)
+#target_link_libraries(coral_iron_turtle /usr/local/lib/librealsense2.so)
+#target_link_libraries(coral_iron_turtle /usr/local/lib/librealsense2.so.2.40)
+
 
 ###       Adding to the project the 'opencv' library it used for the frame processing (and, +- as an object detector) and as an object tracker
 find_package(OpenCV REQUIRED)

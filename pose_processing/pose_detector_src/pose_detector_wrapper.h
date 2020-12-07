@@ -22,6 +22,7 @@
 #include "../posenet/posenet_decoder_op.h"
 #include "../pose_param_detection_src/pose_param_engine.h"
 #include "../../pursuit_processor/pursuit_processor.h"
+#include "../../process_camera/intel_realsense_camera/realsense_processor.h"
 
 /** @brief This constant contains a code of successful operation. */
 const int CODE_STATUS_OK = 0;
@@ -114,6 +115,14 @@ private:
      *        for manual chasing by a human body*/
     std::shared_ptr<PursuitProcessor> _pursuitProcessor;
 
+    /** @brief this is variable is smart pointer on the class RealsenseProcessor,
+     *         which used here for getting more accurate data of distance from the Intel Realsense camera*/
+    std::shared_ptr<RealsenseProcessor> _realsenseProcessor;
+
+    /** @brief this private function is used for building edge tpu interpreter for "connecting" a pose detection model,
+     *         and edgetpu calculation accelerator
+     *  @param model - is a model with loaded from a file
+     *  @param edgetpu_context - is a link on the egletpu in the system*/
     std::unique_ptr<tflite::Interpreter>
     build_edge_tpu_interpreter(const tflite::FlatBufferModel &model, edgetpu::EdgeTpuContext *edgetpu_context);
 

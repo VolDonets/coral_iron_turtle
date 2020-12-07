@@ -15,6 +15,8 @@ PoseDetectorWrapper::PoseDetectorWrapper() {
 
     _interestAreaCenterCoordinate.first = 640 / 2;
     _interestAreaCenterCoordinate.second = 480 / 2;
+
+    _realsenseProcessor = std::make_shared<RealsenseProcessor>();
 }
 
 PoseDetectorWrapper::PoseDetectorWrapper(const std::string &pathToPoseNetModel) {
@@ -94,6 +96,7 @@ int PoseDetectorWrapper::start_pose_detection() {
         if (_statusModelInterpreterActivation == CODE_STATUS_OK) {
             _isProcessThread = true;
             process_pose_detection();
+            _realsenseProcessor->start_processing();
             return CODE_STATUS_OK;
         } else
             return _statusModelInterpreterActivation;
@@ -102,6 +105,7 @@ int PoseDetectorWrapper::start_pose_detection() {
 
 int PoseDetectorWrapper::stop_pose_detection() {
     _isProcessThread = false;
+    _realsenseProcessor->stop_processing();
     _queueDetectedPoses.clear();
     return CODE_STATUS_OK;
 }
@@ -273,6 +277,10 @@ void PoseDetectorWrapper::draw_last_pose_on_image(cv::Mat &frame) {
 //            cv::putText(frame, strLine, cv::Point(10, 90), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
 //                        cv::Scalar(46, 193, 24), 1, cv::LINE_AA);
         std::pair<float, float> poseParam;
+        float distToHumanByRealsense = _realsenseProcessor->get_last_distance();
+        strLine = "RS dist to object: " + std::to_string(distToHumanByRealsense) + "m";
+        cv::putText(frame, strLine, cv::Point(10, 110), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
+                    cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
         if (_poseParamEngine->get_xy_offset_no_dist(poseParam, k_x, k_y)) {
             strLine = "Angle offset: " + std::to_string((180 * poseParam.first) / 3.14) + "@";
             cv::putText(frame, strLine, cv::Point(10, 70), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
@@ -280,6 +288,7 @@ void PoseDetectorWrapper::draw_last_pose_on_image(cv::Mat &frame) {
             strLine = "Dist to object: " + std::to_string(poseParam.second) + "m";
             cv::putText(frame, strLine, cv::Point(10, 90), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0,
                         cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
+            poseParam.second = distToHumanByRealsense;
             if (_pursuitProcessor != nullptr) {
                 _pursuitProcessor->add_aim_for_processing(poseParam);
             }
